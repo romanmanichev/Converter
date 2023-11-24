@@ -1,41 +1,30 @@
-import openpyxl
-import xml.etree.ElementTree
-
-# Открытие файла 
-file = openpyxl.load_workbook('listOfDispa.xlsx')
-
-sheet = file['Лист2']
-
-length = sheet.max_column-1
-listOfPatient = [[] for i in range(length)]
-
-for i in range(1, length+1):
-	for j in sheet:
-		listOfPatient[i-1] += [j[i].value]
-
-# print(listOfPatient[0][0])
-
-# for i in range(0, len(listOfPatient)):
-# 	for j in range(0, len(listOfPatient[i])):
-# 		print(listOfPatient[i][j], end=' ')
-# 		break
-
-# print(listOfPatient[0][333]) # [1-7][0-333]
+from openpyxl import load_workbook
+from lxml import etree
 
 
-for i in range(len(listOfPatient[0])): # range(len(listOfPatient))
+# Загрузка excel файла и листа
+wb = load_workbook('listOfDispa.xlsx')
+sheet = wb['Лист2']
 
-	print("<FAM>" + listOfPatient[0][i] + "</FAM>")
-	print("<IM>" + listOfPatient[1][i] + "</IM>")
-	print("<OT>" + listOfPatient[2][i] + "/<OT>")
-	print("<W>" + listOfPatient[3][i] + "</W>")
-	print("<DR>" + listOfPatient[4][i] + "</DR>")
-	print("<PHONE>" + listOfPatient[5][i] + "</PHONE>")
-	print("<ENP>" listOfPatient[6][i] + "</ENP>")
-	print("<SNILS>" + listOfPatient[7][i] + "</SNILS>")
+# Создание <ZL_LIST> тега
+ZL_LIST = etree.Element("ZL_LIST")
 
-	# for j in range(len(listOfPatient[0])):
-	# 	print(listOfPatient[i][j])
 
-# f = open('some.xml', 'a')
-# f.close()
+# Теги для формарования xml файла
+tags = ['N_ZAP', 'FAM', 'IM', 'OT', 'W', 'DR', 'PHONE', 'ENP', 'SNILS'] # 9 
+
+# Перебор ecxel файла
+for i in range(1, sheet.max_row+1):
+	# Создание <ZAP> тега
+	column = etree.SubElement(ZL_LIST, "ZAP")
+	# Получение итерируемой строки
+	for j in range(1, sheet.max_column+1):
+		
+		# Формирование тега из переменной tags
+		column1 = etree.SubElement(column, tags[j-1])
+		# Добавление соответствующего текста в тег
+		column1.text = str(sheet.cell(row=i, column=j).value)
+
+# Создание дерева и xml файла 
+tree = etree.ElementTree(ZL_LIST)
+tree.write("example.xml", pretty_print=True, encoding='UTF-8')
