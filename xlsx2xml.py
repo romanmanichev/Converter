@@ -58,7 +58,7 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 				# Преобразование даты в следующую маску ГГГГ-ММ-ДД
 				olddate = str(sheet.cell(row=i, column=j).value)
 
-				# Фильтр даты (костыль)
+				# Фильтр даты
 				column1 = etree.SubElement(column, tags[j-1])
 
 				if check_date(olddate, '%Y-%m-%d %H:%M:%S') != False:
