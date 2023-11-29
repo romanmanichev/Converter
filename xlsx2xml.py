@@ -4,6 +4,7 @@ import datetime as dt
 
 
 def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
+
 	# Загрузка excel файла и листа
 	wb = load_workbook(f"{fileEXCEL}.xlsx")
 	sheet = wb[f"{NameOfList}"]
@@ -37,29 +38,41 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 		except:
 			return False
 
+
+	# Счетчики для перебора тегов
+	firstTag = 0
+	lastTag = len(tags) # -1
+
+
+	# Номер столбца, с которого начать читывать данные
+	numberOfColumn = 1
+	
+
 	# Перебор excel файла
 	for i in range(1, sheet.max_row+1):
+
 		# Создание <ZAP> тега
 		column = etree.SubElement(ZL_LIST, "ZAP")
+
+
+		# Добавление идентификатора N_ZAP
+		column2 = etree.SubElement(column, "N_ZAP")
+		column2.text = str(counter)
+		counter += 1
+
 		# Получение итерируемой строки
-		for j in range(1, sheet.max_column+1):
-			# Проврека для N_ZAP и DR
-			if tags[j-1] == "N_ZAP":
+		for j, k in zip(range(numberOfColumn, sheet.max_column+1), range(1, lastTag)): # Первый элемент range является номером столбца, с которого надо считывать данные
 
-				# Формирование тега из переменной tags
-				column1 = etree.SubElement(column, tags[j-1])
 
-				# Добавление соответствующего текста в тег
-				column1.text = str(counter)
-				counter += 1
-			
-			elif tags[j-1] == "DR":
+			# print(f"<{tags[k]}>" + str(sheet.cell(row=i, column=j).value) + f"</{tags[k]}>")
+				
+			if tags[k] == "DR":
 
 				# Преобразование даты в следующую маску ГГГГ-ММ-ДД
 				olddate = str(sheet.cell(row=i, column=j).value)
 
-				# Фильтр даты
-				column1 = etree.SubElement(column, tags[j-1])
+				# Фильтр даты (костыль)
+				column1 = etree.SubElement(column, tags[k])
 
 				if check_date(olddate, '%Y-%m-%d %H:%M:%S') != False:
 					column1.text = str(check_date(olddate, '%Y-%m-%d %H:%M:%S'))
@@ -68,10 +81,11 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 				else:
 					# Даты, которые не попали под фильтрацию
 					column1.text = olddate
-			elif tags[j-1] == "PHONE":
+			
+			elif tags[k] == "PHONE":
 				
 				# Формирование тега из переменной tags
-				column1 = etree.SubElement(column, tags[j-1])
+				column1 = etree.SubElement(column, tags[k])
 
 				# Добавление соответствующего текста в тег
 				column1.text = str('79111111111')
@@ -79,7 +93,7 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 			else:
 
 				# Формирование тега из переменной tags
-				column1 = etree.SubElement(column, tags[j-1])
+				column1 = etree.SubElement(column, tags[k])
 
 				# Добавление соответствующего текста в тег
 				if sheet.cell(row=i, column=j).value == None:
