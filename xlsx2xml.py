@@ -3,7 +3,8 @@ from lxml import etree
 import datetime as dt
 
 
-def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
+# Фильтрация через единый формальный параметр функции (дата, снилс, полис)
+def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1', FilerOfData=True):
 
 	# Загрузка excel файла и листа
 	wb = load_workbook(f"{fileEXCEL}.xlsx")
@@ -32,20 +33,8 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 
 	# Функция для проверки даты по фильтру
 	def check_date(olddate, filter):
-		try:
-			newdate = dt.datetime.strptime(olddate, filter)
-			return newdate.date()
-		except:
-			return False
-
-
-	# Счетчики для перебора тегов
-	firstTag = 0
-	lastTag = len(tags) # -1
-
-
-	# Номер столбца, с которого начать читывать данные
-	numberOfColumn = 1
+		try: return dt.datetime.strptime(olddate, filter).date()
+		except: return False
 	
 
 	# Перебор excel файла
@@ -54,26 +43,23 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 		# Создание <ZAP> тега
 		column = etree.SubElement(ZL_LIST, "ZAP")
 
-
 		# Добавление идентификатора N_ZAP
 		column2 = etree.SubElement(column, "N_ZAP")
 		column2.text = str(counter)
 		counter += 1
 
 		# Получение итерируемой строки
-		for j, k in zip(range(numberOfColumn, sheet.max_column+1), range(1, lastTag)): # Первый элемент range является номером столбца, с которого надо считывать данные
+		for j, k in zip(range(1, sheet.max_column+1), range(1, len(tags))): # Первый элемент range является номером столбца, с которого надо считывать данные
 
-
-			# print(f"<{tags[k]}>" + str(sheet.cell(row=i, column=j).value) + f"</{tags[k]}>")
-				
+			# Условия для проверки некоторых тегов
 			if tags[k] == "DR":
-
 				# Преобразование даты в следующую маску ГГГГ-ММ-ДД
 				olddate = str(sheet.cell(row=i, column=j).value)
 
-				# Фильтр даты (костыль)
+				# Формирование тега из переменной tags
 				column1 = etree.SubElement(column, tags[k])
 
+				# Фильтрация даты по фильтрамы
 				if check_date(olddate, '%Y-%m-%d %H:%M:%S') != False:
 					column1.text = str(check_date(olddate, '%Y-%m-%d %H:%M:%S'))
 				elif check_date(olddate.strip(' '), '%d.%m.%Y') != False:
@@ -83,15 +69,17 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 					column1.text = olddate
 			
 			elif tags[k] == "PHONE":
-				
 				# Формирование тега из переменной tags
 				column1 = etree.SubElement(column, tags[k])
 
 				# Добавление соответствующего текста в тег
-				column1.text = str('79111111111')
-
+				column1.text = str('')
+			elif tags[k] == "ENP":
+				if FilerOfData != False:
+					if len(str(sheet.cell(row=i, column=j).value)) != 16:
+						with open('errorLog.txt', 'a', encoding='UTF-8') as f:
+							f.write(f'Строка {i} стробец ENP не соответствует количеству символов\n')
 			else:
-
 				# Формирование тега из переменной tags
 				column1 = etree.SubElement(column, tags[k])
 
@@ -112,7 +100,6 @@ def xlsx2xml(fileEXCEL, fileXML, tags, NameOfList='Лист1'):
 		column5.text = str("2023-11-20")
 		column6 = etree.SubElement(column, "TIMEDP")
 		column6.text = str("09:00:00")
-
 
 	# Создание дерева и xml файла
 	tree = etree.ElementTree(ZL_LIST)
