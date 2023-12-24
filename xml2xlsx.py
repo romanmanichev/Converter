@@ -4,7 +4,7 @@ from openpyxl import Workbook
 
 def xml2xlsx(fileXML, fileEXCEL):
     # Открытие xml файла
-    tree = ET.parse(f"{fileXML}.xml")
+    tree = ET.parse(f"{fileXML}")
     root = tree.getroot()
     
 
@@ -16,13 +16,9 @@ def xml2xlsx(fileXML, fileEXCEL):
         for subelem in root[elem]:
             datas[elem-1] += (subelem.text, )
 
-
     # Создание листа excel
     wb = Workbook()
     lst = wb.active
-
-    # Создание строки с заголовками
-    # lst.append(("name", "surname"))
 
     for data in datas:
         lst.append(data)
